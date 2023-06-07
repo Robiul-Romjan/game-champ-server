@@ -1,5 +1,6 @@
 const express = require('express')
 const app = express()
+const jwt = require('jsonwebtoken');
 const cors = require('cors')
 require('dotenv').config()
 const port = process.env.PORT || 5000
@@ -97,5 +98,5 @@ app.get('/', (req, res) => {
 })
 
 app.listen(port, () => {
-    console.log(`Assignment 11 running on port ${port}`)
+    console.log(`Assignment 12 running on port ${port}`)
 })
