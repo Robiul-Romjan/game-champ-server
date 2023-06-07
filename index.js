@@ -36,18 +36,17 @@ async function run() {
     const usersCollection = client.db('game-camp').collection('users');
 
 
-       // save user Email and role in DB
-       app.put("/users/:email", async(req, res)=> {
-        const email = req.params.email;
+       // save user Email and name in DB
+       app.post("/users", async(req, res)=>{
         const user = req.body;
-        const query = {email: email};
-        const options = {upsert: true};
-        const updateDoc = {
-            $set: user
+        const query = {email: user.email}
+        const existingUser = await usersCollection.findOne(query)
+        if(existingUser){
+          return res.send({message: "User already exists"})
         }
-        const result = await usersCollection.updateOne(query, updateDoc, options);
-        res.send(result)
-    });
+        const result = await usersCollection.insertOne(user);
+        res.send(result);
+      });
 
 
 
