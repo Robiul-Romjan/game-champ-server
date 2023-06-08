@@ -54,6 +54,7 @@ async function run() {
 
     const usersCollection = client.db('game-camp').collection('users');
     const classesCollection = client.db('game-camp').collection('classes');
+    const selectClassesCollection = client.db('game-camp').collection('selectClasses');
 
 
 
@@ -148,6 +149,13 @@ async function run() {
         },
       };
       const result = await classesCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    // post select classes by student
+    app.post("/select-classes", async(req, res)=> {
+      const selectClass = req.body;
+      const result = await selectClassesCollection.insertOne(selectClass);
       res.send(result);
     });
 
