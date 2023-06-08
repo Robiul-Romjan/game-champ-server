@@ -8,12 +8,30 @@ const port = process.env.PORT || 5000
 
 // middleware
 const corsOptions = {
-    origin: '*',
-    credentials: true,
-    optionSuccessStatus: 200,
+  origin: '*',
+  credentials: true,
+  optionSuccessStatus: 200,
 }
 app.use(cors(corsOptions))
 app.use(express.json())
+
+// JWT Access
+const verifyJWT = (req, res, next) => {
+  const authorization = req.headers.authorization;
+  if(!authorization){
+    return res.status(401).send({error: true, message: "unauthorized access"});
+  }
+  // bearer token
+  const token = authorization.split(" ")[1];
+
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded)=>{
+    if(err){
+      return res.status(401).send({error: true, message: "unauthorized access"});
+    }
+    req.decoded = decoded;
+    next();
+  })
+}
 
 
 
@@ -37,53 +55,71 @@ async function run() {
     const usersCollection = client.db('game-camp').collection('users');
     const classesCollection = client.db('game-camp').collection('classes');
 
-       //get all users
-       app.get("/users", async(req, res)=> {
-        const result = await usersCollection.find().toArray();
-        res.send(result);
-       })
-       // save user Email and name in DB
-       app.post("/users", async(req, res)=>{
-        const user = req.body;
-        const query = {email: user.email}
-        const existingUser = await usersCollection.findOne(query)
-        if(existingUser){
-          return res.send({message: "User already exists"})
-        }
-        const result = await usersCollection.insertOne(user);
-        res.send(result);
-      });
-    //   make user admin
-    app.patch("/users/admin/:id", async(req, res)=> {
-        const id = req.params.id;
-        const filter = {_id: new ObjectId(id)};
-        const updateDoc = {
-          $set: {
-            role: "admin"
-          },
-        };
-        const result = await usersCollection.updateOne(filter, updateDoc);
-        res.send(result);
-      });
-    //   make user admin
-    app.patch("/users/instructor/:id", async(req, res)=> {
-        const id = req.params.id;
-        const filter = {_id: new ObjectId(id)};
-        const updateDoc = {
-          $set: {
-            role: "instructor"
-          },
-        };
-        const result = await usersCollection.updateOne(filter, updateDoc);
-        res.send(result);
-      });
 
-      // post class by instructors
-      app.post("/classes", async(req, res)=> {
-        const newClasses = req.body;
-        const result = await classesCollection.insertOne(newClasses);
+
+     // verify user using JWT
+     app.post("/jwt", (req, res)=> {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: "1h"})
+      res.send({token})
+    });
+
+    //get all users
+    app.get("/users", async (req, res) => {
+      const result = await usersCollection.find().toArray();
+      res.send(result);
+    })
+    // save user Email and name in DB
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      const query = { email: user.email }
+      const existingUser = await usersCollection.findOne(query)
+      if (existingUser) {
+        return res.send({ message: "User already exists" })
+      }
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
+    //   make user admin
+    app.patch("/users/admin/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: "admin"
+        },
+      };
+      const result = await usersCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+    //   make user instructor
+    app.patch("/users/instructor/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: "instructor"
+        },
+      };
+      const result = await usersCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    // post class by instructors
+    app.post("/classes", async (req, res) => {
+      const newClasses = req.body;
+      const result = await classesCollection.insertOne(newClasses);
+      res.send(result);
+    });
+    // get instructor classes
+    app.get("/instructorClasses", async (req, res) => {
+        let query = {};
+        if (req.query?.email) {
+          query = { email: req.query.email }
+        }
+        const result = await classesCollection.find(query).toArray();
         res.send(result);
-      });
+    });
 
 
 
@@ -102,9 +138,9 @@ run().catch(console.dir);
 
 
 app.get('/', (req, res) => {
-    res.send('Assignment 11 Server is running..')
+  res.send('Assignment 11 Server is running..')
 })
 
 app.listen(port, () => {
-    console.log(`Assignment 12 running on port ${port}`)
+  console.log(`Assignment 12 running on port ${port}`)
 })
