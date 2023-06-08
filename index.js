@@ -35,6 +35,7 @@ async function run() {
     await client.connect();
 
     const usersCollection = client.db('game-camp').collection('users');
+    const classesCollection = client.db('game-camp').collection('classes');
 
        //get all users
        app.get("/users", async(req, res)=> {
@@ -74,6 +75,13 @@ async function run() {
           },
         };
         const result = await usersCollection.updateOne(filter, updateDoc);
+        res.send(result);
+      });
+
+      // post class by instructors
+      app.post("/classes", async(req, res)=> {
+        const newClasses = req.body;
+        const result = await classesCollection.insertOne(newClasses);
         res.send(result);
       });
 
