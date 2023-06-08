@@ -104,7 +104,12 @@ async function run() {
       const result = await usersCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
-
+    
+    // get all classes
+    app.get("/classes", async(req, res)=> {
+      const result = await classesCollection.find().toArray();
+      res.send(result)
+    });
     // post class by instructors
     app.post("/classes", async (req, res) => {
       const newClasses = req.body;
@@ -119,6 +124,31 @@ async function run() {
         }
         const result = await classesCollection.find(query).toArray();
         res.send(result);
+    });
+
+    // update class status for approve
+    app.patch("/classes/approve/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: "approved"
+        },
+      };
+      const result = await classesCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+    // update class status for deny
+    app.patch("/classes/deny/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: "denied"
+        },
+      };
+      const result = await classesCollection.updateOne(filter, updateDoc);
+      res.send(result);
     });
 
 
