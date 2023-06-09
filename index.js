@@ -111,6 +111,14 @@ async function run() {
       const result = await classesCollection.find().toArray();
       res.send(result)
     });
+
+    // get popular classes
+    app.get("/popular-classes", async(req, res)=> {
+      const result = await classesCollection.find().sort({enrolled: -1}).limit(6).toArray();
+      res.send(result);
+    })
+
+
     // post class by instructors
     app.post("/classes", async (req, res) => {
       const newClasses = req.body;
