@@ -3,6 +3,7 @@ const app = express()
 const jwt = require('jsonwebtoken');
 const cors = require('cors')
 require('dotenv').config()
+const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY)
 const port = process.env.PORT || 5000
 
 
@@ -55,6 +56,7 @@ async function run() {
     const usersCollection = client.db('game-camp').collection('users');
     const classesCollection = client.db('game-camp').collection('classes');
     const selectClassesCollection = client.db('game-camp').collection('selectClasses');
+    const paymentCollection = client.db('game-camp').collection('payments');
 
 
 
@@ -185,6 +187,36 @@ async function run() {
       res.send(result)
     });
 
+    // payment related apis
+    app.post("/create-payment-intent", verifyJWT, async(req, res)=> {
+      const {price} = req.body;
+      const amount = price*100;
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"]
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret
+      })
+    });
+
+    // post payments
+    app.post("/payments", async(req, res)=> {
+      const payment = req.body;
+      const result = await paymentCollection.insertOne(payment);
+      res.send(result);
+    });
+
+    app.get("/payments", async(req, res)=> {
+      let query = {};
+      if (req.query?.email) {
+        query = { email: req.query.email }
+      }
+      const result = await paymentCollection.find(query).toArray();
+      res.send(result);
+    })
+
 
 
     // Send a ping to confirm a successful connection
@@ -196,7 +228,6 @@ async function run() {
   }
 }
 run().catch(console.dir);
-
 
 
 
