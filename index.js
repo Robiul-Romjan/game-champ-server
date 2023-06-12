@@ -67,6 +67,17 @@ async function run() {
       res.send({token})
     });
 
+    // use verifyJWT before using verifyAdmin
+    const verifyAdmin = async(req, res, next) => {
+      const email = req.decoded.email;
+      const query = {email: email};
+      const user = await usersCollection.findOne(query);
+      if(user?.role !== "admin"){
+        return res.status(403).send({error: true, message: "forbidden access"})
+      }
+      next();
+    }
+
     //get all users
     app.get("/users", async (req, res) => {
       const result = await usersCollection.find().toArray();
@@ -135,6 +146,21 @@ async function run() {
         }
         const result = await classesCollection.find(query).toArray();
         res.send(result);
+    });
+    // send feedback for denied class
+    app.patch("/classes/denied/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id)
+      const updateFeedback = req.body;
+      console.log(updateFeedback)
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          feedback: updateFeedback.feedback
+        },
+      };
+      const result = await classesCollection.updateOne(filter, updateDoc);
+      res.send(result);
     });
 
     // update class status for approve
