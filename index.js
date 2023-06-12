@@ -51,7 +51,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const usersCollection = client.db('game-camp').collection('users');
     const classesCollection = client.db('game-camp').collection('classes');
@@ -67,16 +67,6 @@ async function run() {
       res.send({token})
     });
 
-    // use verifyJWT before using verifyAdmin
-    const verifyAdmin = async(req, res, next) => {
-      const email = req.decoded.email;
-      const query = {email: email};
-      const user = await usersCollection.findOne(query);
-      if(user?.role !== "admin"){
-        return res.status(403).send({error: true, message: "forbidden access"})
-      }
-      next();
-    }
 
     //get all users
     app.get("/users", async (req, res) => {
@@ -259,7 +249,7 @@ run().catch(console.dir);
 
 
 app.get('/', (req, res) => {
-  res.send('Assignment 11 Server is running..')
+  res.send('Assignment 12 Server is running..')
 })
 
 app.listen(port, () => {
